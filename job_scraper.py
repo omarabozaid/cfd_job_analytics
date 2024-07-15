@@ -59,11 +59,12 @@ class JobScraper:
         while page_num < max_pages:
             url = url_template + f"&start={page_num * 25}"
             print(f"Scraping page {page_num}...")
+            print(url)
             page_num += 1
             self.driver.get(url)
 
             try:
-                WebDriverWait(self.driver, 10).until(
+                WebDriverWait(self.driver, 5).until(
                     EC.presence_of_all_elements_located((By.CLASS_NAME, 'job-search-card'))
                 )
 
@@ -87,11 +88,11 @@ class JobScraper:
                     reposted_jobs[key]['count'] += 1
                     reposted_jobs[key]['dates'].append(job_details['date_posted'])
 
-                time.sleep(3)  # Optional: Add a small delay before fetching next page
+                time.sleep(2)
             except Exception as e:
-                print(f"Error scraping page {page_num}: {str(e)}")
-                break
-
+                print(f"Error scraping page {page_num}: {str(e)}") 
+                raise ValueError
+        print(f"Error scraping page {page_num}: {str(e)}")
         return jobs, reposted_jobs
 
     def is_duplicate(self, job_details):
@@ -117,10 +118,10 @@ class JobScraper:
         counts = list(sorted_counts.values())
 
         plt.figure(figsize=(12, 6))
-        plt.bar(companies[:10], counts[:10])
+        plt.bar(companies, counts)
         plt.xlabel('Company')
         plt.ylabel('Number of Posts')
-        plt.title('Top 10 Companies by Number of Job Posts')
+        plt.title('Companies by Number of Job Posts')
         plt.xticks(rotation=45, ha='right')
         plt.tight_layout()
         plt.show()
@@ -156,7 +157,6 @@ class JobScraper:
     def close_driver(self):
         self.driver.quit()
 
-
 def get_time_filter():
     while True:
         print("Choose time filter:")
@@ -171,12 +171,27 @@ def get_time_filter():
         else:
             print("Invalid choice. Please enter a number between 1 and 4.")
 
+def get_location_filter():
+    while True:
+        print("Choose Location:")
+        print("1. France")
+        print("2. United Kingdom")
+        print("3. United States")
+        print("4. Germany")
+        choice = input("Enter your choice (1-4): ")
 
+        if choice in ['1', '2', '3', '4']:
+            return choice
+        else:
+            print("Invalid choice. Please enter a number between 1 and 4.")
+
+"""
 def main():
     job_scraper = JobScraper()
 
     # Get user input for time filter
     time_filter = get_time_filter()
+    location_filter = get_location_filter()
 
     # Map user choice to LinkedIn filter
     if time_filter == '1':
@@ -188,15 +203,25 @@ def main():
     else:
         f_TPR = ''  # No time filter
 
+    if location_filter == '1':
+        location = 'France'  
+    elif location_filter == '2':
+        location = 'United Kingdom'  
+    elif location_filter == '3':
+        location = 'United States'  
+    elif location_filter == '4':
+        location = 'Germany'  
+
+
     # Construct the URL template with chosen filters
-    url_template = f"https://www.linkedin.com/jobs/search/?&f_TPR={f_TPR}&keywords=cfd&location=France&origin=JOB_SEARCH_PAGE_JOB_FILTER"
+    url_template = f"https://www.linkedin.com/jobs/search/?&f_TPR={f_TPR}&keywords=cfd&location={location}&origin=JOB_SEARCH_PAGE_JOB_FILTER"
 
     # Get user input for maximum pages to scrape
     max_pages = int(input("Enter maximum number of pages to scrape: "))
 
     jobs, reposted_jobs = job_scraper.scrape_jobs(url_template, max_pages)
 
-    job_scraper.save_to_csv(jobs, 'cfd_jobs_with_filters.csv')
+    job_scraper.save_to_csv(jobs, f'cfd_jobs_{location}.csv')
 
     print(f"Scraped {len(jobs)} CFD job postings in France with filters. Saved to 'cfd_jobs_with_filters.csv'.")
 
@@ -209,3 +234,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+"""
